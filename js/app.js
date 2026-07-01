@@ -9,7 +9,7 @@ createApp({
 
     // Theme Management (Default to dark or saved preference)
     const isDark = ref(localStorage.getItem('theme') !== 'light');
-    
+
     const updateThemeClass = () => {
       if (isDark.value) {
         document.documentElement.classList.add('dark');
@@ -49,13 +49,13 @@ createApp({
         const res = await fetch('/api/ocupacion');
         const json = await res.json();
         sedesData.value = json.sedes || {};
-        
+
         if (sedesVisibles.value.length === 0) {
           sedesVisibles.value = Object.keys(sedesData.value).filter(
             slug => !sedesData.value[slug].error
           );
         }
-        
+
         await nextTick();
         // Retraso seguro de renderizado para evitar problemas de montado del canvas
         setTimeout(() => {
@@ -85,7 +85,7 @@ createApp({
 
     const obtenerMejorHora = (horarios) => {
       if (!horarios || Object.keys(horarios).length === 0) return { hora: 'Cerrado', ocupacion: 0 };
-      
+
       // Filtramos descartando explícitamente las 22:00h
       const horasValidas = Object.entries(horarios)
         .map(([h, v]) => ({ hora: parseInt(h), ocupacion: parseInt(v) }))
@@ -96,6 +96,98 @@ createApp({
       horasValidas.sort((a, b) => a.ocupacion - b.ocupacion);
       return { hora: formatAMPM(horasValidas[0].hora), ocupacion: horasValidas[0].ocupacion };
     };
+
+    const obtenerTendencia = (horarios) => {
+      if (!horarios || Object.keys(horarios).length === 0) {
+        return {
+          status: 'Sin datos',
+          detalle: '—',
+          badgeClass: 'bg-slate-500/10 text-slate-500 border border-slate-500/20'
+        };
+      }
+
+      const ahora = new Date();
+      const currentHour = ahora.getHours();
+
+      const horasValidas = Object.entries(horarios)
+        .map(([h, v]) => ({ hora: parseInt(h), ocupacion: parseInt(v) }))
+        .filter(item => item.ocupacion > 0);
+
+      if (horasValidas.length === 0) {
+        return {
+          status: 'Cerrado',
+          detalle: 'Sin datos de operación',
+          badgeClass: 'bg-slate-500/10 text-slate-500 border border-slate-500/20'
+        };
+      }
+
+      const horas = horasValidas.map(h => h.hora);
+      const minHour = Math.min(...horas);
+      const maxHour = Math.max(...horas);
+
+      if (currentHour < minHour || currentHour >= maxHour) {
+        return {
+          status: 'Cerrado 🛑',
+          detalle: `Abre a las ${formatAMPM(minHour)}`,
+          badgeClass: 'bg-red-500/10 text-red-500 dark:text-red-400 border border-red-500/20'
+        };
+      }
+
+      const val0 = horarios[currentHour] !== undefined ? parseInt(horarios[currentHour]) : 0;
+      const val1 = horarios[currentHour + 1] !== undefined ? parseInt(horarios[currentHour + 1]) : undefined;
+      const val2 = horarios[currentHour + 2] !== undefined ? parseInt(horarios[currentHour + 2]) : undefined;
+
+      // 1. Decreases in the next hour
+      if (val1 !== undefined && val1 < val0) {
+        return {
+          status: 'Bajando 📉',
+          detalle: `Baja la próxima hora (${val0}% → ${val1}%)`,
+          badgeClass: 'bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 border border-emerald-500/20 font-bold'
+        };
+      }
+
+      // 2. Decreases in 2 hours
+      const midVal = val1 !== undefined ? val1 : val0;
+      if (val2 !== undefined && val2 < midVal) {
+        return {
+          status: 'Baja en 2h 📉',
+          detalle: `Baja a las ${formatAMPM(currentHour + 2)} (${midVal}% → ${val2}%)`,
+          badgeClass: 'bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 border border-emerald-500/20 font-bold'
+        };
+      }
+
+      // 3. Not decreasing in 1 or 2 hours. Find when it starts to decrease.
+      let horaDescenso = -1;
+      for (let h = currentHour + 1; h <= maxHour; h++) {
+        const prevVal = horarios[h - 1] !== undefined ? parseInt(horarios[h - 1]) : 0;
+        const currVal = horarios[h] !== undefined ? parseInt(horarios[h]) : 0;
+        if (currVal < prevVal) {
+          horaDescenso = h;
+          break;
+        }
+      }
+
+      const esAumento = (val1 !== undefined && val1 > val0) || (val2 !== undefined && val2 > midVal);
+      const statusLabel = esAumento ? 'Subiendo 📈' : 'Estable ➡️';
+      const badgeStyle = esAumento
+        ? 'bg-amber-500/10 text-amber-500 dark:text-amber-400 border border-amber-500/20 font-bold'
+        : 'bg-blue-500/10 text-blue-500 dark:text-blue-400 border border-blue-500/20 font-bold';
+
+      if (horaDescenso !== -1) {
+        return {
+          status: statusLabel,
+          detalle: `Empieza a bajar a las ${formatAMPM(horaDescenso)}`,
+          badgeClass: badgeStyle
+        };
+      }
+
+      return {
+        status: statusLabel,
+        detalle: 'No baja antes del cierre',
+        badgeClass: badgeStyle
+      };
+    };
+
 
     const renderChart = () => {
       const ctx = document.getElementById('trafficChart');
@@ -113,7 +205,7 @@ createApp({
         .map((slug, index) => {
           const dataSede = sedesData.value[slug];
           const dataPoints = horasEjeX.map(h => dataSede.horarios[h] !== undefined ? dataSede.horarios[h] : null);
-          
+
           return {
             label: dataSede.nombre,
             data: dataPoints,
@@ -188,17 +280,18 @@ createApp({
       fetchData();
     });
 
-    return { 
-      sedesData, 
-      sedesVisibles, 
-      loading, 
-      fetchData, 
-      toggleAll, 
-      obtenerMejorHora, 
-      isDark, 
-      toggleTheme, 
-      currentYear, 
-      sortedSedes 
+    return {
+      sedesData,
+      sedesVisibles,
+      loading,
+      fetchData,
+      toggleAll,
+      obtenerMejorHora,
+      obtenerTendencia,
+      isDark,
+      toggleTheme,
+      currentYear,
+      sortedSedes
     };
   }
 }).mount('#app');

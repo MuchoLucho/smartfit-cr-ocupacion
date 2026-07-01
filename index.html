@@ -20,7 +20,7 @@
         <h1 class="text-3xl font-extrabold theme-title tracking-tight">
           Smart Fit Capacity Tracker 🇨🇷
         </h1>
-        <p class="theme-text-secondary text-sm mt-1.5">No vayas en horas pico</p>
+        <p class="theme-text-secondary text-sm mt-1.5">¡Evita las horas pico!</p>
       </div>
       <button @click="toggleTheme"
         class="px-4 py-2 border rounded-lg theme-card cursor-pointer text-sm font-semibold transition-all hover:bg-amber-500/10 hover:border-amber-500">
@@ -70,14 +70,14 @@
       </div>
 
       <div class="lg:col-span-4 theme-card p-5 rounded-2xl">
-        <h2 class="text-lg font-bold mb-4">Cuándo ir: Mejor horario operativo por Sede</h2>
+        <h2 class="text-lg font-bold mb-4">Estado y Tendencia de Ocupación por Sede</h2>
         <div class="overflow-x-auto">
           <table class="w-full text-left border-collapse">
             <thead>
               <tr class="border-b theme-border theme-text-secondary text-sm">
                 <th class="py-3 px-4 font-semibold">Sede</th>
-                <th class="py-3 px-4 font-semibold">Mejor Hora de Entrenamiento</th>
-                <th class="py-3 px-4 font-semibold">Ocupación Esperada</th>
+                <th class="py-3 px-4 font-semibold">Tendencia Actual</th>
+                <th class="py-3 px-4 font-semibold">Pronóstico / Comportamiento</th>
                 <th class="py-3 px-4 font-semibold">Estado del Servidor</th>
               </tr>
             </thead>
@@ -86,15 +86,15 @@
                 <td class="py-3 px-4 font-semibold">{{ sede.nombre }}</td>
 
                 <td class="py-3 px-4">
-                  <span v-if="!sede.error" class="px-2.5 py-1 rounded theme-badge font-bold">
-                    {{ obtenerMejorHora(sede.horarios).hora }}
+                  <span v-if="!sede.error" :class="obtenerTendencia(sede.horarios).badgeClass" class="px-2.5 py-1 rounded">
+                    {{ obtenerTendencia(sede.horarios).status }}
                   </span>
                   <span v-else class="theme-text-secondary">—</span>
                 </td>
 
                 <td class="py-3 px-4 theme-text-secondary">
-                  <span v-if="!sede.error" class="font-medium">
-                    {{ obtenerMejorHora(sede.horarios).ocupacion }}% capacidad
+                  <span v-if="!sede.error" class="font-medium theme-text-primary">
+                    {{ obtenerTendencia(sede.horarios).detalle }}
                   </span>
                   <span v-else class="theme-text-secondary">—</span>
                 </td>
