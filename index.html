@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Fit - Comparador Inteligente</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body class="antialiased p-4 md:p-8 transition-colors duration-300">
+
+  <div id="app" class="max-w-7xl mx-auto space-y-6">
+
+    <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b theme-border pb-6 gap-4">
+      <div>
+        <h1 class="text-3xl font-extrabold theme-title tracking-tight">
+          Smart Fit Capacity Tracker 🇨🇷
+        </h1>
+        <p class="theme-text-secondary text-sm mt-1.5">No vayas en horas pico</p>
+      </div>
+      <button @click="toggleTheme"
+        class="px-4 py-2 border rounded-lg theme-card cursor-pointer text-sm font-semibold transition-all hover:bg-amber-500/10 hover:border-amber-500">
+        <span v-if="isDark">Modo Claro</span>
+        <span v-else>Modo Oscuro</span>
+      </button>
+    </header>
+
+    <div v-if="loading" class="text-center py-16">
+      <div class="animate-spin inline-block w-8 h-8 border-4 border-amber-400 border-t-transparent rounded-full mb-4">
+      </div>
+      <p class="theme-text-secondary">Analizando el HTML de las sedes de Smart Fit...</p>
+    </div>
+
+    <div v-else class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+
+      <div class="lg:col-span-1 theme-card p-5 rounded-2xl h-fit">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-bold">Filtro de Sedes</h2>
+          <div class="text-xs space-x-2">
+            <button @click="toggleAll(true)" class="theme-text-accent hover:underline cursor-pointer">Todas</button>
+            <button @click="toggleAll(false)"
+              class="theme-text-secondary hover:underline cursor-pointer">Ninguna</button>
+          </div>
+        </div>
+        <div class="space-y-2 max-h-[400px] overflow-y-auto pr-2">
+          <label v-for="sede in sortedSedes" :key="sede.slug"
+            class="flex items-center gap-3 p-2 hover:bg-amber-500/5 rounded-lg cursor-pointer transition-colors"
+            :class="{'opacity-50': sede.error}">
+            <input type="checkbox" v-model="sedesVisibles" :value="sede.slug" :disabled="sede.error"
+              class="w-4 h-4 rounded text-amber-500 focus:ring-amber-500 bg-slate-900 border-slate-700">
+            <div class="flex flex-col">
+              <span class="text-sm font-medium" :class="{'text-red-400': sede.error}">
+                {{ sede.nombre }}
+              </span>
+              <span v-if="sede.error" class="text-[10px] text-red-400">Error de conexión</span>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <div class="lg:col-span-3 theme-card p-5 rounded-2xl flex flex-col justify-between">
+        <h2 class="text-lg font-bold mb-4">Tendencia de Ocupación por Hora</h2>
+        <div class="relative w-full h-[350px]">
+          <canvas id="trafficChart"></canvas>
+        </div>
+      </div>
+
+      <div class="lg:col-span-4 theme-card p-5 rounded-2xl">
+        <h2 class="text-lg font-bold mb-4">Cuándo ir: Mejor horario operativo por Sede</h2>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="border-b theme-border theme-text-secondary text-sm">
+                <th class="py-3 px-4 font-semibold">Sede</th>
+                <th class="py-3 px-4 font-semibold">Mejor Hora de Entrenamiento</th>
+                <th class="py-3 px-4 font-semibold">Ocupación Esperada</th>
+                <th class="py-3 px-4 font-semibold">Estado del Servidor</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y theme-border text-sm">
+              <tr v-for="sede in sortedSedes" :key="sede.slug" class="theme-table-row transition-colors">
+                <td class="py-3 px-4 font-semibold">{{ sede.nombre }}</td>
+
+                <td class="py-3 px-4">
+                  <span v-if="!sede.error" class="px-2.5 py-1 rounded theme-badge font-bold">
+                    {{ obtenerMejorHora(sede.horarios).hora }}
+                  </span>
+                  <span v-else class="theme-text-secondary">—</span>
+                </td>
+
+                <td class="py-3 px-4 theme-text-secondary">
+                  <span v-if="!sede.error" class="font-medium">
+                    {{ obtenerMejorHora(sede.horarios).ocupacion }}% capacidad
+                  </span>
+                  <span v-else class="theme-text-secondary">—</span>
+                </td>
+
+                <td class="py-3 px-4">
+                  <span v-if="!sede.error"
+                    class="text-emerald-500 dark:text-emerald-400 flex items-center gap-1.5 text-xs font-semibold">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Operativo
+                  </span>
+                  <span v-else class="text-red-500 dark:text-red-400 flex items-center gap-1.5 text-xs font-semibold">
+                    <span class="w-2 h-2 rounded-full bg-red-500"></span> {{ sede.error }}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <footer class="pt-8 pb-4 border-t theme-border space-y-4 text-xs theme-text-secondary text-center">
+      <p class="max-w-2xl mx-auto leading-relaxed">
+        Smart Fit Capacity Tracker is an independent project and is not affiliated, associated, authorized, endorsed by,
+        or in any way officially connected with Smart Fit, or any of its subsidiaries or affiliates.
+      </p>
+      <p>
+        © 2026 - {{ currentYear }} Smart Fit CR Capacity Tracker. Licensed under the MIT License.
+      </p>
+    </footer>
+  </div>
+
+  <script src="js/app.js" defer></script>
+
+</body>
+
+</html>

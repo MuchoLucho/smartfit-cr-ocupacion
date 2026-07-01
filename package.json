@@ -1,0 +1,10 @@
+{
+  "name": "smartfit-checker",
+  "version": "1.0.0",
+  "description": "Smart Fit Capacity Tracker - Monitoreo de asistencia y optimización de horarios de entrenamiento",
+  "main": "api/ocupacion.js",
+  "scripts": {},
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
