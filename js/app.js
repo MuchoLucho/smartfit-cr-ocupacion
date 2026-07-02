@@ -26,8 +26,8 @@ createApp({
     // Calculate current copyright year
     const currentYear = new Date().getFullYear();
 
-    // Horas del eje X (De 5 AM a 9 PM -> 21h máximo útil)
-    const horasEjeX = Array.from({ length: 17 }, (_, i) => i + 5);
+    // Horas del eje X (De 5 AM a 10 PM -> 22h máximo útil)
+    const horasEjeX = Array.from({ length: 18 }, (_, i) => i + 5);
 
     const COLORES = [
       '#f59e0b', '#10b981', '#3b82f6', '#ec4899', '#8b5cf6',
@@ -109,27 +109,48 @@ createApp({
       const ahora = new Date();
       const currentHour = ahora.getHours();
 
-      const horasValidas = Object.entries(horarios)
-        .map(([h, v]) => ({ hora: parseInt(h), ocupacion: parseInt(v) }))
-        .filter(item => item.ocupacion > 0);
+      const mes = ahora.getMonth() + 1;
+      const dia = ahora.getDate();
+      const mesDia = `${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+      const dayOfWeek = ahora.getDay();
 
-      if (horasValidas.length === 0) {
-        return {
-          status: 'Cerrado',
-          detalle: 'Sin datos de operación',
-          badgeClass: 'bg-slate-500/10 text-slate-500 border border-slate-500/20'
-        };
-      }
+      // Feriados Costa Rica 2026
+      const feriados = [
+        "01-01", // Año Nuevo
+        "04-02", // Jueves Santo
+        "04-03", // Viernes Santo
+        "04-11", // Día de Juan Santamaría
+        "05-01", // Día del Trabajo
+        "07-25", // Anexión de Nicoya
+        "08-02", // Virgen de los Ángeles
+        "08-15", // Día de la Madre
+        "08-31", // Día de la Persona Negra
+        "09-15", // Independencia
+        "12-01", // Abolición del Ejército
+        "12-25"  // Navidad
+      ];
 
-      const horas = horasValidas.map(h => h.hora);
-      const minHour = Math.min(...horas);
-      const maxHour = Math.max(...horas);
+      const esFindeOFeriado = dayOfWeek === 0 || dayOfWeek === 6 || feriados.includes(mesDia);
+      const minHour = esFindeOFeriado ? 7 : 5;
+      const maxHour = esFindeOFeriado ? 19 : 22;
 
       if (currentHour < minHour || currentHour >= maxHour) {
         return {
           status: 'Cerrado 🛑',
           detalle: `Abre a las ${formatAMPM(minHour)}`,
           badgeClass: 'bg-red-500/10 text-red-500 dark:text-red-400 border border-red-500/20'
+        };
+      }
+
+      const horasValidas = Object.entries(horarios)
+        .map(([h, v]) => ({ hora: parseInt(h), ocupacion: parseInt(v) }))
+        .filter(item => item.ocupacion > 0);
+
+      if (horasValidas.length === 0) {
+        return {
+          status: 'Sin datos',
+          detalle: 'Sin datos de operación',
+          badgeClass: 'bg-slate-500/10 text-slate-500 border border-slate-500/20'
         };
       }
 
