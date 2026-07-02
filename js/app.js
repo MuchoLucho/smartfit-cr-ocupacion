@@ -70,10 +70,16 @@ createApp({
 
     const toggleAll = (select) => {
       if (select) {
-        sedesVisibles.value = Object.keys(sedesData.value).filter(slug => !sedesData.value[slug].error);
+        sedesVisibles.value = Object.keys(sedesData.value).filter(slug => !sedesData.value[slug].error && sedesData.value[slug].provincia === 'Heredia');
       } else {
         sedesVisibles.value = [];
       }
+    };
+
+    // FAQ modal visibility
+    const showFAQ = ref(false);
+    const toggleFAQ = () => {
+      showFAQ.value = !showFAQ.value;
     };
 
     const tableSearch = ref('');
@@ -383,7 +389,9 @@ createApp({
       tableSearch,
       provinceFilter,
       provinceList,
-      filteredTableSedes
+      filteredTableSedes,
+      showFAQ,
+      toggleFAQ
     };
   }
 }).mount('#app');
