@@ -89,10 +89,15 @@
 
       <div class="lg:col-span-4 theme-card p-5 rounded-2xl">
         <h2 class="text-lg font-bold mb-4">Estado y Tendencia de Ocupación por Sede</h2>
+        <div class="mb-4">
+          <input type="text" v-model="tableSearch" placeholder="Buscar por nombre o provincia"
+            class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-amber-500" />
+        </div>
         <div class="overflow-x-auto">
           <table class="w-full text-left border-collapse">
             <thead>
               <tr class="border-b theme-border theme-text-secondary text-sm">
+                <th class="py-3 px-4 font-semibold">Provincia</th>
                 <th class="py-3 px-4 font-semibold">Sede</th>
                 <th class="py-3 px-4 font-semibold">Tendencia Actual</th>
                 <th class="py-3 px-4 font-semibold">Comportamiento</th>
@@ -100,9 +105,9 @@
               </tr>
             </thead>
             <tbody class="divide-y theme-border text-sm">
-              <tr v-for="sede in sortedSedes" :key="sede.slug" class="theme-table-row transition-colors">
+              <tr v-for="sede in filteredTableSedes" :key="sede.slug" class="theme-table-row transition-colors">
+                <td class="py-3 px-4 font-semibold">{{ sede.provincia }}</td>
                 <td class="py-3 px-4 font-semibold">{{ sede.nombre }}</td>
-
                 <td class="py-3 px-4">
                   <span v-if="!sede.error" :class="obtenerTendencia(sede.horarios).badgeClass"
                     class="px-2.5 py-1 rounded">
@@ -110,14 +115,12 @@
                   </span>
                   <span v-else class="theme-text-secondary">—</span>
                 </td>
-
                 <td class="py-3 px-4 theme-text-secondary">
                   <span v-if="!sede.error" class="font-medium theme-text-primary">
                     {{ obtenerTendencia(sede.horarios).detalle }}
                   </span>
                   <span v-else class="theme-text-secondary">—</span>
                 </td>
-
                 <td class="py-3 px-4">
                   <span v-if="!sede.error"
                     class="text-emerald-500 dark:text-emerald-400 flex items-center gap-1.5 text-xs font-semibold">

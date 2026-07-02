@@ -76,6 +76,9 @@ createApp({
       }
     };
 
+    const tableSearch = ref('');
+    const provinceFilter = ref('');
+
     // Sort locations alphabetically by name
     const sortedSedes = computed(() => {
       return Object.entries(sedesData.value)
@@ -83,7 +86,39 @@ createApp({
         .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
     });
 
-    // Group locations by province for tree view
+    // Filter and sort for the table view
+    const filteredTableSedes = computed(() => {
+      const query = tableSearch.value.toLowerCase().trim();
+      const provFilter = provinceFilter.value;
+      let sedes = Object.entries(sedesData.value)
+        .map(([slug, data]) => ({ slug, ...data }));
+
+      // Apply text search filter
+      if (query) {
+        sedes = sedes.filter(sede =>
+          sede.nombre.toLowerCase().includes(query) ||
+          (sede.provincia && sede.provincia.toLowerCase().includes(query))
+        );
+      }
+      // Apply province dropdown filter
+      if (provFilter) {
+        sedes = sedes.filter(sede => sede.provincia === provFilter);
+      }
+
+      return sedes.sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+    });
+
+
+    // List of provinces for dropdown filter
+    const provinceList = computed(() => {
+      // Get unique province names from sedesData
+      const provinces = Object.values(sedesData.value)
+        .map(s => s.provincia)
+        .filter(p => p);
+      // Remove duplicates and sort
+      return [...new Set(provinces)].sort((a, b) => a.localeCompare(b, 'es'));
+    });
+
     const sedesPorProvincia = computed(() => {
       const grouped = {};
       Object.entries(sedesData.value).forEach(([slug, data]) => {
@@ -344,7 +379,11 @@ createApp({
       toggleTheme,
       currentYear,
       sortedSedes,
-      sedesPorProvincia
+      sedesPorProvincia,
+      tableSearch,
+      provinceFilter,
+      provinceList,
+      filteredTableSedes
     };
   }
 }).mount('#app');
