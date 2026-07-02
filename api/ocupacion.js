@@ -1,17 +1,33 @@
 const SEDES = {
-  "oxigeno": "Oxígeno",
-  "c3-cariari": "C3 Cariari",
-  "estadio": "Estadio",
-  "la-ribera": "La Ribera",
-  "city-mall-costa-rica": "City Mall",
-  "paseo-de-las-flores": "Paseo de las Flores",
-  "plaza-heredia": "Plaza Heredia",
-  "multiplaza-escazu": "Multiplaza Escazú",
-  "terrazas-lindora": "Terrazas Lindora",
-  "santa-ana-trade-center": "Santa Ana Trade Center",
-  "escazu": "Escazú Centro",
-  "lincoln": "Lincoln Plaza",
-  "rohrmoser": "Rohrmoser"
+  "oxigeno": { nombre: "Oxígeno", provincia: "Heredia" },
+  "c3-cariari": { nombre: "C3 Cariari", provincia: "Heredia" },
+  "la-ribera": { nombre: "La Ribera", provincia: "Heredia" },
+  "paseo-de-las-flores": { nombre: "Paseo de las Flores", provincia: "Heredia" },
+  "plaza-heredia": { nombre: "Plaza Heredia", provincia: "Heredia" },
+  "estadio": { nombre: "Estadio", provincia: "Heredia" },
+
+  "city-mall-costa-rica": { nombre: "City Mall", provincia: "Alajuela" },
+  "la-trinidad": { nombre: "La Trinidad", provincia: "Alajuela" },
+  "higuerones": { nombre: "Higuerones", provincia: "Alajuela" },
+
+  "paseo-metropoli": { nombre: "Paseo Metrópoli", provincia: "Cartago" },
+
+  "multiplaza-escazu": { nombre: "Multiplaza Escazú", provincia: "San José" },
+  "escazu": { nombre: "Escazú Centro", provincia: "San José" },
+  "terrazas-lindora": { nombre: "Terrazas Lindora", provincia: "San José" },
+  "santa-ana-trade-center": { nombre: "Santa Ana Trade Center", provincia: "San José" },
+  "lincoln": { nombre: "Lincoln Plaza", provincia: "San José" },
+  "rohrmoser": { nombre: "Rohrmoser", provincia: "San José" },
+  "el-encuentro-alajuelita": { nombre: "El Encuentro Alajuelita", provincia: "San José" },
+  "zona-centro": { nombre: "Zona Centro", provincia: "San José" },
+  "san-sebastian-1": { nombre: "San Sebastian", provincia: "San José" },
+  "expreso-desamparados": { nombre: "Expreso Desamparados", provincia: "San José" },
+  "multicentro-desamparados": { nombre: "Multicentro Desamparados", provincia: "San José" },
+  "plaza-de-la-cultura": { nombre: "Plaza de la Cultura", provincia: "San José" },
+  "expreso-tibas": { nombre: "Expreso Tibás", provincia: "San José" },
+  "san-pedro-1": { nombre: "San Pedro", provincia: "San José" },
+  "guadalupe-1": { nombre: "Guadalupe", provincia: "San José" },
+  "curridabat": { nombre: "Curridabat", provincia: "San José" }
 };
 
 export default async function handler(req, res) {
@@ -37,7 +53,7 @@ export default async function handler(req, res) {
         });
 
         if (!response.ok) {
-          resultado.sedes[slug] = { nombre: SEDES[slug], error: `HTTP ${response.status}`, horarios: {} };
+          resultado.sedes[slug] = { nombre: SEDES[slug].nombre, provincia: SEDES[slug].provincia, error: `HTTP ${response.status}`, horarios: {} };
           return;
         }
 
@@ -74,24 +90,25 @@ export default async function handler(req, res) {
 
               if (dataDict && dataDict.data) {
                 resultado.sedes[slug] = {
-                  nombre: SEDES[slug],
+                  nombre: SEDES[slug].nombre,
+                  provincia: SEDES[slug].provincia,
                   horarios: dataDict.data
                 };
               } else {
-                resultado.sedes[slug] = { nombre: SEDES[slug], error: "Estructura interna sin .data", horarios: {} };
+                resultado.sedes[slug] = { nombre: SEDES[slug].nombre, provincia: SEDES[slug].provincia, error: "Estructura interna sin .data", horarios: {} };
               }
             } catch (parseError) {
-              resultado.sedes[slug] = { nombre: SEDES[slug], error: `Error de parseo JSON: ${parseError.message}`, horarios: {} };
+              resultado.sedes[slug] = { nombre: SEDES[slug].nombre, provincia: SEDES[slug].provincia, error: `Error de parseo JSON: ${parseError.message}`, horarios: {} };
             }
           } else {
-            resultado.sedes[slug] = { nombre: SEDES[slug], error: "No se pudo extraer el contenido de JSON.parse", horarios: {} };
+            resultado.sedes[slug] = { nombre: SEDES[slug].nombre, provincia: SEDES[slug].provincia, error: "No se pudo extraer el contenido de JSON.parse", horarios: {} };
           }
         } else {
-          resultado.sedes[slug] = { nombre: SEDES[slug], error: "No se encontró el bloque <script> del gimnasio", horarios: {} };
+          resultado.sedes[slug] = { nombre: SEDES[slug].nombre, provincia: SEDES[slug].provincia, error: "No se encontró el bloque <script> del gimnasio", horarios: {} };
         }
 
       } catch (e) {
-        resultado.sedes[slug] = { nombre: SEDES[slug], error: `Excepcion de red: ${e.message}`, horarios: {} };
+        resultado.sedes[slug] = { nombre: SEDES[slug].nombre, provincia: SEDES[slug].provincia, error: `Excepcion de red: ${e.message}`, horarios: {} };
       }
     }));
 

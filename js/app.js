@@ -52,7 +52,7 @@ createApp({
 
         if (sedesVisibles.value.length === 0) {
           sedesVisibles.value = Object.keys(sedesData.value).filter(
-            slug => !sedesData.value[slug].error
+            slug => !sedesData.value[slug].error && sedesData.value[slug].provincia === 'Heredia'
           );
         }
 
@@ -81,6 +81,23 @@ createApp({
       return Object.entries(sedesData.value)
         .map(([slug, data]) => ({ slug, ...data }))
         .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+    });
+
+    // Group locations by province for tree view
+    const sedesPorProvincia = computed(() => {
+      const grouped = {};
+      Object.entries(sedesData.value).forEach(([slug, data]) => {
+        const prov = data.provincia || 'Otras';
+        if (!grouped[prov]) grouped[prov] = [];
+        grouped[prov].push({ slug, ...data });
+      });
+      // Sort provinces alphabetically, then sedes alphabetically
+      return Object.keys(grouped).sort().map(prov => {
+        return {
+          nombre: prov,
+          sedes: grouped[prov].sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'))
+        };
+      });
     });
 
     const obtenerMejorHora = (horarios) => {
@@ -312,7 +329,8 @@ createApp({
       isDark,
       toggleTheme,
       currentYear,
-      sortedSedes
+      sortedSedes,
+      sedesPorProvincia
     };
   }
 }).mount('#app');
