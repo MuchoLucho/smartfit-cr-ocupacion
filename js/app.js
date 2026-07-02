@@ -273,7 +273,15 @@ createApp({
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
-            legend: { display: false },
+            legend: {
+              display: true,
+              position: 'top',
+              labels: {
+                color: tickColor,
+                usePointStyle: true,
+                boxWidth: 8
+              }
+            },
             tooltip: {
               mode: 'index',
               intersect: false,
@@ -286,6 +294,12 @@ createApp({
           },
           scales: {
             y: {
+              title: {
+                display: true,
+                text: 'Porcentaje de ocupación',
+                color: tickColor,
+                font: { size: 13, weight: '500' }
+              },
               min: 0,
               max: 100,
               grid: { color: gridColor },
