@@ -27,7 +27,41 @@ createApp({
     const currentYear = new Date().getFullYear();
 
     // Horas del eje X (De 5 AM a 10 PM -> 22h máximo útil)
-    const horasEjeX = Array.from({ length: 18 }, (_, i) => i + 5);
+    const getHorasEjeX = () => {
+      const ahora = new Date();
+      const mes = ahora.getMonth() + 1;
+      const dia = ahora.getDate();
+      const mesDia = `${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+      const dayOfWeek = ahora.getDay();
+
+      // Feriados Costa Rica 2026
+      const feriados = [
+        "01-01", // Año Nuevo
+        "04-02", // Jueves Santo
+        "04-03", // Viernes Santo
+        "04-11", // Día de Juan Santamaría
+        "05-01", // Día del Trabajo
+        "07-25", // Anexión de Nicoya
+        "08-02", // Virgen de los Ángeles
+        "08-15", // Día de la Madre
+        "08-31", // Día de la Persona Negra
+        "09-15", // Independencia
+        "12-01", // Abolición del Ejército
+        "12-25"  // Navidad
+      ];
+
+      const esFindeOFeriado = dayOfWeek === 0 || dayOfWeek === 6 || feriados.includes(mesDia);
+      
+      if (esFindeOFeriado) {
+        // On weekends and holidays, show only business hours (7 AM to 7 PM)
+        return Array.from({ length: 13 }, (_, i) => i + 7); // Hours 7 to 19
+      } else {
+        // On weekdays, show full hours (5 AM to 10 PM)
+        return Array.from({ length: 18 }, (_, i) => i + 5); // Hours 5 to 22
+      }
+    };
+    
+    const horasEjeX = getHorasEjeX();
 
     const COLORES = [
       '#f59e0b', '#10b981', '#3b82f6', '#ec4899', '#8b5cf6',
